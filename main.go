@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -46,17 +47,6 @@ func main() {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-
-	header, err := reader.Read()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	for _, field := range header {
-		fmt.Print(field, "\t")
-	}
-	fmt.Println()
-	fmt.Println()
 
 	for {
 		record, err := reader.Read()
@@ -112,9 +102,10 @@ func main() {
 
 		data[nama].Ketidakhadiran = append(data[nama].Ketidakhadiran, catatKetidakhadiran)
 
-		if v.Ket == "IZIN" {
+		switch v.Ket {
+		case "IZIN":
 			data[nama].JumlahIzin++
-		} else if v.Ket == "GHOIB" {
+		case "GHOIB":
 			data[nama].JumlahGhoib++
 		}
 
@@ -124,11 +115,22 @@ func main() {
 }
 
 func stringToDate(date string) (time.Time, error) {
-	t, err := time.Parse("2/1/2006", date)
-	if err != nil {
-		return time.Time{}, err
+	layouts := []string{"2/1/2006", "2 1 2006"}
+
+	var galatAkhir error
+	for _, layout := range layouts {
+		t, err := time.Parse(layout, date)
+		if err == nil {
+			return t, nil
+		}
+		galatAkhir = err
 	}
-	return t, nil
+
+	if strings.Contains(galatAkhir.Error(), "cannot parse") {
+		return time.Time{}, fmt.Errorf("invalid date format: %s", date)
+	}
+
+	return time.Time{}, galatAkhir
 }
 
 func displayData(data Data) {
