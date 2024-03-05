@@ -38,29 +38,23 @@ func main() {
 		return
 	}
 	namaFile := os.Args[1]
-
 	file, err := os.Open(namaFile)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer file.Close()
-
 	reader := csv.NewReader(file)
-
 	for {
 		record, err := reader.Read()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-
 			fmt.Println(err)
 			return
 		}
-
 		input := Record{}
-
 		for i, field := range record {
 			switch i {
 			case 0:
@@ -79,44 +73,30 @@ func main() {
 				input.Ket = field
 			}
 		}
-
 		catatan = append(catatan, input)
 	}
-
 	fmt.Println("Jumlah data: ", len(catatan))
 	fmt.Println()
-
 	data := Data{}
-
 	for _, v := range catatan {
 		nama := v.Nama
-
 		if _, ok := data[nama]; !ok {
 			data[nama] = &DataKehadiran{}
 		}
-
-		catatKetidakhadiran := CatatanKehadiran{
-			Tanggal: v.Tanggal,
-			Ket:     v.Ket,
-		}
-
+		catatKetidakhadiran := CatatanKehadiran{Tanggal: v.Tanggal, Ket: v.Ket}
 		data[nama].Ketidakhadiran = append(data[nama].Ketidakhadiran, catatKetidakhadiran)
-
 		switch v.Ket {
 		case "IZIN":
 			data[nama].JumlahIzin++
 		case "GHOIB":
 			data[nama].JumlahGhoib++
 		}
-
 	}
-
 	displayData(data)
 }
 
 func stringToDate(date string) (time.Time, error) {
 	layouts := []string{"2/1/2006", "2 1 2006"}
-
 	var galatAkhir error
 	for _, layout := range layouts {
 		t, err := time.Parse(layout, date)
@@ -125,11 +105,9 @@ func stringToDate(date string) (time.Time, error) {
 		}
 		galatAkhir = err
 	}
-
 	if strings.Contains(galatAkhir.Error(), "cannot parse") {
 		return time.Time{}, fmt.Errorf("invalid date format: %s", date)
 	}
-
 	return time.Time{}, galatAkhir
 }
 
