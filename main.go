@@ -31,19 +31,69 @@ type DataKehadiran struct {
 
 type Data map[string]*DataKehadiran
 
+func newRecord() Record                { return Record{} }
+func newDataKehadiran() *DataKehadiran { return &DataKehadiran{} }
+func newData() Data                    { return make(map[string]*DataKehadiran) }
+
+func newCatatanKehadiran(tanggal time.Time, ket string) CatatanKehadiran {
+	return CatatanKehadiran{
+		Tanggal: tanggal,
+		Ket:     ket,
+	}
+}
+
+func stringToDate(date string) (time.Time, error) {
+	layouts := []string{"2/1/2006", "2 1 2006", "2-1-2006"}
+	var galatAkhir error
+
+	for _, layout := range layouts {
+		t, err := time.Parse(layout, date)
+		if err == nil {
+			return t, nil
+		}
+		galatAkhir = err
+	}
+
+	if strings.Contains(galatAkhir.Error(), "cannot parse") {
+		return time.Time{}, fmt.Errorf("invalid date format: %s", date)
+	}
+
+	return time.Time{}, galatAkhir
+}
+
+func displayData(data Data) {
+	for nama, kehadiran := range data {
+		fmt.Println("Nama:", nama)
+		fmt.Println("Jumlah Izin:", kehadiran.JumlahIzin)
+		fmt.Println("Jumlah Ghoib:", kehadiran.JumlahGhoib)
+		fmt.Println("Ketidakhadiran:")
+
+		for _, catatan := range kehadiran.Ketidakhadiran {
+			fmt.Printf("\t%s: %s\n", catatan.Tanggal.Format("2006-01-02"), catatan.Ket)
+		}
+
+		fmt.Println()
+	}
+}
+
 func main() {
-	catatan := []Record{}
+	catatan := make([]Record, 0)
+
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: kala <csv filename>")
 		return
 	}
+
 	namaFile := os.Args[1]
+
 	file, err := os.Open(namaFile)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	defer file.Close()
+
 	reader := csv.NewReader(file)
 	for {
 		record, err := reader.Read()
